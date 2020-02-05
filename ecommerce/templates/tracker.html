@@ -1,0 +1,112 @@
+{% extends 'basic.html' %}
+{% block title%}Cart Tracker{% endblock %}
+{% block head %} {% endblock %}
+{% block body %}
+<div class="container">
+    <div class="col my-5">
+        <h2>Enter your Order Id and Email address to track your order</h2><a href="/" class="btn btn-danger" style="margin-left:1100px;" type="button">Go Home</a>
+        <form method="post" action="#" id="trackerForm">{% csrf_token %}
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="inputname">Order Id</label>
+                    <input type="text" class="form-control" id="orderId" name="orderId" placeholder="Order Id">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputEmail4">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+                </div>
+                <button type="submit" class="btn btn-warning">Track Order</button>
+            </div>
+        </form>
+    </div>
+    <div class="col my-4">
+        <h2>Your Order Status</h2>
+        <div class="my-4">
+            <ul class="list-group badge-light" id="items">
+                Enter your order Id and Email and click Track Order to find details about your order!
+            </ul>
+        </div>
+        <h2>Your Order Details</h2>
+        <div class="my-4">
+            <table style="width:100%; border:2px solid grey;" id="citems">
+            </table>
+        </div>
+    </div>
+</div>
+	<div class="row my-4" id="mytotal">
+
+
+	</div>
+{% endblock %}
+{% block js %}
+<script>
+$('#trackerForm').submit(function(event) {
+    $('#items').empty();
+    var formData = {
+        'orderId': $('input[name=orderId]').val(),
+        'email': $('input[name=email]').val(),
+        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+    };
+    $.ajax({
+            type: 'POST',
+            url: '/track_order',
+            data: formData,
+            encode: true
+        })
+        .done(function(data) {
+
+            data = JSON.parse(data);
+            updates = data[0];
+            if (updates.length > 0 & updates != {}) {
+                for (i = 0; i < updates.length; i++) {
+                    let text = updates[i]['text'];
+                    let time = updates[i]['time'];
+                    mystr = `<li class="list-group-item d-flex justify-content-between align-items-center badge-light">
+                    ${text}
+                    <span class="badge badge-primary badge-pill">${time}</span>
+                </li>`
+                    $('#items').append(mystr);
+                }
+            } else {
+                mystr = `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    Sorry, We are not able to fetch this order id and email. Make sure to type correct order Id and email</li>`
+                $('#items').append(mystr);
+            }
+            // Fill in the order details
+            cart = JSON.parse(data[1]);
+                var total = 0;
+    var quantity =0;
+    tabstr = `<tr>
+
+                <th class="badge-warning" style="text-align:center; padding: 10px;">Names</th>
+                <th class="badge-warning" style="text-align:center;">Size</th>
+                <th class="badge-warning" style="text-align:center;">Color</th>
+                <th class="badge-warning" style="text-align:center;">Quantity</th>
+                <th class="badge-warning" style="text-align:center;">Price/pic(Rs.)</th>
+               </tr>`
+    $('#citems').append(tabstr);
+            for (item in cart) {
+                  let name = cart[item][0];
+        let size = cart[item][1];
+        let color = cart[item][2];
+        let qty =parseFloat(cart[item][3]);
+        let price = parseFloat(cart[item][4]);
+        total = total+(price*qty);
+        quantity = quantity + qty;
+        mystr = `<tr style=" border:1px solid grey;">
+                    <td class="badge-light" style="text-align:center; padding: 10px;">${name}</td>
+                    <td class="badge-secondary" style="text-align:center;">${size}</td>
+                    <td  class="badge-light" style="text-align:center;">${color}</td>
+                    <td class="badge-secondary" style="text-align:center;">${qty}</td>
+                    <td class="badge-light" style="text-align:center;">${price}</td>
+                </tr>`
+                $('#citems').append(mystr);
+            }
+                 mcato = `<button class="btn btn-warning" style="margin-left:930px;" type="button">Total Quantity:${quantity}</button>
+		<button class="btn btn-warning" style="margin-right:auto; margin-left:100px;" type="button">Total Price(Rs):${total}</button>`
+		$('#mytotal').append(mcato);
+        });
+    event.preventDefault();
+});
+</script>
+{% endblock %}
